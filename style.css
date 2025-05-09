@@ -1,0 +1,59 @@
+body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background-color: #121212;
+  color: #fff;
+}
+
+header {
+  padding: 1rem;
+  background: #1f1f1f;
+  text-align: center;
+}
+
+header input, header select {
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  font-size: 16px;
+  margin-right: 5px;
+}
+
+main {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 16px;
+  padding: 1rem;
+}
+
+.wallpaper-card {
+  background: #222;
+  border-radius: 10px;
+  overflow: hidden;
+  text-align: center;
+  padding: 10px;
+  box-shadow: 0 0 5px #000;
+}
+
+.wallpaper-card img {
+  max-width: 100%;
+  border-radius: 8px;
+}
+
+button.download-btn {
+  margin-top: 8px;
+  padding: 6px 12px;
+  background: #2196F3;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+footer {
+  padding: 1rem;
+  text-align: center;
+  background: #1f1f1f;
+  color: #aaa;
+}

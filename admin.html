@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin Panel - Upload Wallpaper</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>Admin Panel</h1>
+    <p>Upload New Wallpaper</p>
+  </header>
+
+  <main>
+    <div class="upload-form">
+      <input type="password" id="adminPass" placeholder="Enter Admin Password">
+      <input type="text" id="title" placeholder="Title">
+      <select id="category">
+        <option value="Nature">Nature</option>
+        <option value="Abstract">Abstract</option>
+        <option value="Animals">Animals</option>
+        <option value="Minimal">Minimal</option>
+      </select>
+      <input type="file" id="imageInput" accept="image/*">
+      <button onclick="uploadWallpaper()">Upload</button>
+    </div>
+    <p id="uploadStatus"></p>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 Wallpaper Admin</p>
+  </footer>
+
+  <script>
+    const API_URL = "https://sheetdb.io/api/v1/f2iv9cgsu7dg3"; // Replace with your SheetDB API
+    const ADMIN_PASSWORD = "ritesh@admin123"; // Change to your secure password
+
+    function uploadWallpaper() {
+      const pass = document.getElementById("adminPass").value;
+      if (pass !== ADMIN_PASSWORD) {
+        alert("Invalid admin password!");
+        return;
+      }
+
+      const title = document.getElementById("title").value.trim();
+      const category = document.getElementById("category").value;
+      const file = document.getElementById("imageInput").files[0];
+
+      if (!title || !file) {
+        alert("Title and Image are required.");
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onloadend = function () {
+        const base64Image = reader.result;
+        const now = new Date();
+        const data = {
+          data: {
+            title: title,
+            category: category,
+            image_base64: base64Image,
+            date: now.toISOString().split("T")[0],
+            time: now.toTimeString().split(" ")[0]
+          }
+        };
+
+        fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data)
+        })
+        .then(res => res.json())
+        .then(() => {
+          document.getElementById("uploadStatus").textContent = "Wallpaper uploaded successfully!";
+          document.getElementById("title").value = "";
+          document.getElementById("imageInput").value = "";
+        })
+        .catch(err => {
+          document.getElementById("uploadStatus").textContent = "Upload failed!";
+          console.error(err);
+        });
+      };
+
+      reader.readAsDataURL(file);
+    }
+  </script>
+</body>
+</html>
