@@ -1,89 +1,185 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Admin Panel - Upload Wallpaper</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .admin-container {
+      max-width: 500px;
+      margin: 2rem auto;
+      padding: 2rem;
+      background: #1e1e1e;
+      border-radius: 12px;
+      box-shadow: 0 0 10px #000;
+    }
+
+    .admin-container h2 {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group button {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      font-size: 16px;
+    }
+
+    .form-group input[type="file"] {
+      background: #2a2a2a;
+      color: #ccc;
+    }
+
+    .form-group button {
+      background: #4caf50;
+      color: #fff;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    .status {
+      text-align: center;
+      margin-top: 1rem;
+      color: #4caf50;
+    }
+  </style>
 </head>
 <body>
   <header>
-    <h1>Admin Panel</h1>
-    <p>Upload New Wallpaper</p>
+    <h1>Wallpaper Admin</h1>
   </header>
 
   <main>
-    <div class="upload-form">
-      <input type="password" id="adminPass" placeholder="Enter Admin Password">
-      <input type="text" id="title" placeholder="Title">
-      <select id="category">
-        <option value="Nature">Nature</option>
-        <option value="Abstract">Abstract</option>
-        <option value="Animals">Animals</option>
-        <option value="Minimal">Minimal</option>
-      </select>
-      <input type="file" id="imageInput" accept="image/*">
-      <button onclick="uploadWallpaper()">Upload</button>
+    <div class="admin-container">
+      <h2>Upload Wallpaper</h2>
+
+      <div class="form-group">
+        <input type="password" id="adminPass" placeholder="Admin Password" />
+      </div>
+
+      <div class="form-group">
+        <input type="text" id="title" placeholder="Wallpaper Title" />
+      </div>
+
+      <div class="form-group">
+        <select id="category">
+          <option value="Nature">Nature</option>
+          <option value="Abstract">Abstract</option>
+          <option value="Animals">Animals</option>
+          <option value="Minimal">Minimal</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label style="display:block; margin-bottom:5px; color:#ccc;">Upload via URL</label>
+        <input type="text" id="imageURL" placeholder="Paste image URL" />
+      </div>
+
+      <div class="form-group">
+        <label style="display:block; margin-bottom:5px; color:#ccc;">Or Upload Image File</label>
+        <input type="file" id="imageInput" accept="image/*" />
+      </div>
+
+      <div class="form-group">
+        <button onclick="uploadWallpaper()">Upload Wallpaper</button>
+      </div>
+
+      <div class="status" id="uploadStatus"></div>
     </div>
-    <p id="uploadStatus"></p>
   </main>
 
-  <footer>
-    <p>&copy; 2025 Wallpaper Admin</p>
-  </footer>
-
   <script>
-    const API_URL = "https://sheetdb.io/api/v1/f2iv9cgsu7dg3"; // Replace with your SheetDB API
-    const ADMIN_PASSWORD = "ritesh@admin123"; // Change to your secure password
+    const API_URL = "https://sheetdb.io/api/v1/f2iv9cgsu7dg3"; // Replace with your actual SheetDB API
+    const ADMIN_PASSWORD = "admin123"; // Change this to your secure password
 
     function uploadWallpaper() {
       const pass = document.getElementById("adminPass").value;
       if (pass !== ADMIN_PASSWORD) {
-        alert("Invalid admin password!");
+        alert("Invalid password!");
         return;
       }
 
       const title = document.getElementById("title").value.trim();
       const category = document.getElementById("category").value;
+      const imageURL = document.getElementById("imageURL").value.trim();
       const file = document.getElementById("imageInput").files[0];
 
-      if (!title || !file) {
-        alert("Title and Image are required.");
+      if (!title || (!imageURL && !file)) {
+        alert("Please provide title and image (URL or file).");
         return;
       }
 
-      const reader = new FileReader();
-      reader.onloadend = function () {
-        const base64Image = reader.result;
-        const now = new Date();
-        const data = {
-          data: {
-            title: title,
-            category: category,
-            image_base64: base64Image,
-            date: now.toISOString().split("T")[0],
-            time: now.toTimeString().split(" ")[0]
-          }
-        };
+      const now = new Date();
+      const date = now.toISOString().split("T")[0];
+      const time = now.toTimeString().split(" ")[0];
 
-        fetch(API_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data)
-        })
+      if (imageURL) {
+        // Upload using URL directly as base64
+        fetchImageAsBase64(imageURL)
+          .then(base64 => sendToSheetDB(title, category, base64, date, time))
+          .catch(() => {
+            document.getElementById("uploadStatus").textContent = "Invalid image URL or failed to fetch image.";
+          });
+      } else {
+        // Upload using file
+        const reader = new FileReader();
+        reader.onloadend = function () {
+          const base64Image = reader.result;
+          sendToSheetDB(title, category, base64Image, date, time);
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    function fetchImageAsBase64(url) {
+      return fetch(url)
+        .then(res => res.blob())
+        .then(blob => {
+          return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+          });
+        });
+    }
+
+    function sendToSheetDB(title, category, base64, date, time) {
+      const data = {
+        data: {
+          title,
+          category,
+          image_base64: base64,
+          date,
+          time
+        }
+      };
+
+      fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      })
         .then(res => res.json())
         .then(() => {
           document.getElementById("uploadStatus").textContent = "Wallpaper uploaded successfully!";
           document.getElementById("title").value = "";
+          document.getElementById("imageURL").value = "";
           document.getElementById("imageInput").value = "";
         })
         .catch(err => {
-          document.getElementById("uploadStatus").textContent = "Upload failed!";
+          document.getElementById("uploadStatus").textContent = "Upload failed.";
           console.error(err);
         });
-      };
-
-      reader.readAsDataURL(file);
     }
   </script>
 </body>
